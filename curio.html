@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EWS System Architecture | SIH</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Custom styles for the architecture page */
+        .system-roadmap {
+            display: flex;
+            justify-content: space-around;
+            gap: 30px;
+            margin-top: 40px;
+        }
+        .roadmap-stage {
+            flex: 1;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            text-align: center;
+            transition: transform 0.3s ease;
+            background-color: #ffffff;
+        }
+        .roadmap-stage:hover {
+            transform: translateY(-5px);
+        }
+        .stage-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        .data-collection .stage-icon { color: #28a745; }
+        .cloud-platform .stage-icon { color: #007bff; }
+        .warning-response .stage-icon { color: #dc3545; }
+        
+        .stage-title {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            font-weight: bold;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .stage-details {
+            text-align: left;
+            padding: 0 10px;
+            font-size: 0.95em;
+        }
+        .stage-details li {
+            margin-bottom: 8px;
+        }
+        /* Navigation Bar to link to the Dashboard */
+        .nav-bar {
+            text-align: center;
+            padding: 15px 20px;
+            background-color: #333;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .nav-bar a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.1em;
+            padding: 10px 20px;
+            border: 1px solid white;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .nav-bar a:hover {
+            background-color: #555;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+    <header>
+        <h1>Smart Community Health Early Warning System Architecture</h1>
+        <div id="status-bar">
+            <span>The Blueprint for Action in Northeast India</span>
+        </div>
+    </header>
+    
+    <div class="nav-bar">
+        <a href="index.html">GO TO LIVE DASHBOARD DEMO &raquo;</a>
+    </div>
+
+    <main>
+        
+        <div class="system-roadmap">
+            
+            <div class="roadmap-stage data-collection">
+                <div class="stage-icon"><i class="fas fa-database"></i></div>
+                <div class="stage-title">1. Data Collection</div>
+                <ul class="stage-details">
+                    <li>**IoT/Sensor Data:** Real-time collection of water quality parameters (e.g., Turbidity, pH, TDS) from smart monitoring units.</li>
+                    <li>**Community Reporting (ASHA/VHW):** Health and sanitation data reported via mobile applications.</li>
+                    <li>**External Feeds:** Integration of weather, rainfall, and historical disease datasets.</li>
+                </ul>
+            </div>
+
+            <div class="roadmap-stage cloud-platform">
+                <div class="stage-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                <div class="stage-title">2. Cloud Platform & Analysis</div>
+                <ul class="stage-details">
+                    <li>**Data Ingestion & Storage:** All data streamed to a central cloud database (e.g., IoT Hub, SQL/NoSQL DB).</li>
+                    <li>**Alert Engine:** Custom logic/ML model monitors data for anomalies and thresholds (e.g., Turbidity > 5 NTU).</li>
+                    <li>**Risk Scoring:** Generates a real-time risk score (Green, Amber, Red) based on combined water and health factors.</li>
+                </ul>
+            </div>
+
+            <div class="roadmap-stage warning-response">
+                <div class="stage-icon"><i class="fas fa-bell"></i></div>
+                <div class="stage-title">3. Warning & Response</div>
+                <ul class="stage-details">
+                    <li>**Dashboard Activation:** Triggers visual alerts on the main EWS Dashboard (e.g., RED Alert status for Bishnupur).</li>
+                    <li>**SMS/App Notifications:** Sends immediate, geo-tagged alerts to health workers, officials, and field teams.</li>
+                    <li>**Actionable Log:** Creates a clear record for task assignment and status tracking (e.g., 'Field Team Dispatched').</li>
+                </ul>
+            </div>
+
+        </div>
+    </main>
+
+</body>
+</html>
