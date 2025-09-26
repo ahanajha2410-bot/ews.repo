@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EWS Architecture & Live Dashboard Demo</title>
+    <!-- Chart.js for all data visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome for Icons (Essential for the stage icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        /* Base Styles (Copied from your style.css) */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            scroll-behavior: smooth; /* Crucial for smooth slide transitions */
+        }
+        
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: sticky; /* Keep the header visible */
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* Navigation added to Header */
+        .header-nav {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+        }
+
+        .header-nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 8px 15px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .header-nav a:hover, .header-nav a.active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        #status-bar {
+            margin-top: 10px;
+            font-size: 1.1em;
+        }
+        
+        main {
+            padding: 20px;
+            max-width: 1400px; 
+            margin: 0 auto;
+        }
+        
+        .dashboard-card {
+            background-color: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            color: #0056b3;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        
+        /* Alert Color Coding */
+        .green { background-color: #d4edda; color: #155724; border-left: 5px solid #28a745; }
+        .amber { background-color: #fff3cd; color: #856404; border-left: 5px solid #ffc107; }
+        .red { background-color: #f8d7da; color: #721c24; border-left: 5px solid #dc3545; }
+        
+        /* KPI Container */
+        .kpi-container {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            justify-content: space-around;
+            text-align: center;
+        }
+        
+        .kpi-card {
+            padding: 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            flex-grow: 1;
+        }
+        .red-kpi { background-color: #dc3545; color: white; }
+        .amber-kpi { background-color: #ffc107; color: #333; }
+        .kpi-card:not(.red-kpi):not(.amber-kpi) { background-color: #e9ecef; }
+
+        /* Detail Sections */
+        .data-detail-container {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .water-quality, .disease-surveillance {
+            flex: 1;
+        }
+        
+        .gauge-container {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        
+        .gauge {
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: bold;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            /* Added min-width to prevent squishing during data simulation */
+            min-width: 120px; 
+            text-align: center;
+        }
+
+        /* --- Architecture Styles --- */
+        .architecture-section {
+            padding: 30px 20px;
+            background-color: #e9ecef;
+            border-bottom: 5px solid #007bff;
+        }
+        .architecture-section h2 {
+            color: #007bff;
+            text-align: center;
+            border: none;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+        }
+        .system-roadmap {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Flow Arrows */
+        .system-roadmap::before, .system-roadmap::after {
+            content: '→ → →';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 3em;
+            color: #ccc;
+            opacity: 0.6;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .system-roadmap::before { left: 16.666%; }
+        .system-roadmap::after { left: 50%; }
+
+
+        .roadmap-stage {
+            flex: 1;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            text-align: center;
+            background-color: #ffffff;
+            border-top: 5px solid; 
+            z-index: 1;
+            transition: transform 0.3s;
+        }
+        .roadmap-stage:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+        }
+        
+        .stage-1 { border-color: #28a745; } 
+        .stage-2 { border-color: #007bff; } 
+        .stage-3 { border-color: #dc3545; } 
+
+        .stage-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        .stage-title {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        .stage-details {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+        .stage-details li::before {
+            content: "\f058"; /* Check circle icon */
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
+            font-size: 0.8em;
+            margin-right: 5px;
+        }
+        .stage-1 .stage-details li::before { color: #28a745; }
+        .stage-2 .stage-details li::before { color: #007bff; }
+        .stage-3 .stage-details li::before { color: #dc3545; }
+
+        /* --- INTERACTIVE ELEMENTS STYLES --- */
+        .action-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .action-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+        }
+        .action-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .primary-btn {
+            background-color: #007bff;
+            color: white;
+        }
+        .primary-btn:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        .amber-btn {
+            background-color: #ffc107;
+            color: #333;
+        }
+        .amber-btn:hover:not(:disabled) {
+            background-color: #e0a800;
+        }
+        .dispatch-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+        .dispatch-btn:hover:not(:disabled) {
+            background-color: #c82333;
+        }
+
+        /* Alert Log specific styling for interaction */
+        .alert-log ul li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+        }
+        .alert-log .alert-content {
+            flex-grow: 1;
+        }
+        .alert-actions {
+            flex-shrink: 0;
+            margin-left: 20px;
+        }
+        .dispatched-label {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        /* Media Queries for responsiveness */
+        @media (max-width: 900px) {
+            .system-roadmap {
+                flex-direction: column;
+            }
+            /* ... (flow arrow styles skipped for brevity) ... */
+            .data-detail-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Smart Community Health Early Warning System</h1>
+        <div id="status-bar">
+            <span>Region: Northeast India Pilot</span> | 
+            <span id="global-alert">Global Status: GREEN (Nominal)</span>
+        </div>
+        <!-- Navigation Bar for "Slides" -->
+        <div class="header-nav">
+            <a href="#slide-architecture" id="nav-architecture">
+                <i class="fas fa-sitemap"></i> Slide 1: System Architecture
+            </a>
+            <a href="#slide-dashboard" id="nav-dashboard">
+                <i class="fas fa-chart-line"></i> Slide 2: Live Dashboard Demo
+            </a>
+        </div>
+    </header>
+
+    <!-- ARCHITECTURE SLIDE (First Section) -->
+    <div class="architecture-section" id="slide-architecture">
+        <h2>End-to-End System Architecture: Concept to Action</h2>
+        <div class="system-roadmap">
+            
+            <!-- Stage 1: DATA COLLECTION -->
+            <div class="roadmap-stage stage-1">
+                <div class="stage-icon" style="color:#28a745;"><i class="fas fa-satellite-dish"></i></div>
+                <div class="stage-title">1. DATA COLLECTION</div>
+                <ul class="stage-details">
+                    <li>**IoT:** Real-time sensor data (Turbidity, pH, TDS) [cite: uploaded:Screenshot (149).jpg].</li>
+                    <li>**Health:** Community reports on symptoms (Diarrhea, Fever).</li>
+                    <li>**Feeds:** Integration of external weather and historical datasets.</li>
+                </ul>
+            </div>
+
+            <!-- Stage 2: CLOUD PLATFORM & ANALYSIS -->
+            <div class="roadmap-stage stage-2">
+                <div class="stage-icon" style="color:#007bff;"><i class="fas fa-brain"></i></div>
+                <div class="stage-title">2. CLOUD PLATFORM & ANALYSIS</div>
+                <ul class="stage-details">
+                    <li>**Fusion:** Combines Water Quality & Disease Cluster scores.</li>
+                    <li>**Engine:** Uses **Risk Matrix Fusion** to set alert levels (Red/Amber/Green) [cite: uploaded:Screenshot (149).jpg].</li>
+                    <li>**Storage:** Persistence of all raw and processed alert reports.</li>
+                </ul>
+            </div>
+
+            <!-- Stage 3: WARNING & RESPONSE -->
+            <div class="roadmap-stage stage-3">
+                <div class="stage-icon" style="color:#dc3545;"><i class="fas fa-person-military-pointing"></i></div>
+                <div class="stage-title">3. WARNING & RESPONSE</div>
+                <ul class="stage-details">
+                    <li>**Notify:** Immediate **SMS/Buzzer** alerts to DHOs & Village Heads [cite: uploaded:Screenshot (149).jpg].</li>
+                    <li>**Action:** Activates Field Response Team for investigation (Dispatch Log).</li>
+                    <li>**Closure:** Tracks resolution, completing the EWS loop.</li>
+                    </ul>
+            </div>
+
+        </div>
+    </div>
+    <!-- END OF ARCHITECTURE SLIDE -->
+
+    <main id="slide-dashboard">
+        <section class="dashboard-card overview-map">
+            <h2>Live Operational Dashboard</h2>
+            <div id="map-mockup">
+                <p>Interactive GIS Map Mockup: Showing 3 RED and 7 AMBER alert pins in the pilot region.</p>
+                <!-- NEW: Map Interaction Button -->
+                <button id="focus-map-btn" class="action-btn primary-btn"><i class="fas fa-search-location"></i> Focus on Red Alert: Bishnupur</button>
+                <div id="map-focus-msg" style="margin-top: 10px; font-style: italic; color: #007bff; display: none; font-weight: bold;">
+                    <i class="fas fa-map-pin"></i> Map Filtered to Bishnupur Site (Risk Score: 9.1). Showing 72h Water Quality Trend Overlay.
+                </div>
+            </div>
+            <div class="kpi-container">
+                <div class="kpi-card red-kpi">RED ALERTS: <span id="kpi-red">3</span></div>
+                <div class="kpi-card amber-kpi">AMBER ALERTS: <span id="kpi-amber">7</span></div>
+                <div class="kpi-card">TOTAL SITES: <span id="kpi-total">50</span></div>
+            </div>
+        </section>
+
+        <div class="data-detail-container">
+            <section class="dashboard-card water-quality">
+                <h2>Water Quality - Site X</h2>
+                <div class="gauge-container">
+                    <!-- Added IDs for the script to use the proper class -->
+                    <div class="gauge red" id="gauge-turbidity">Turbidity: 8.5 NTU (RED)</div>
+                    <div class="gauge green" id="gauge-ph">pH: 6.8 (GREEN)</div>
+                    <div class="gauge amber" id="gauge-tds">TDS: 450 ppm (AMBER)</div>
+                </div>
+                <!-- NEW: Sensor Simulation Button -->
+                <div style="text-align: center; margin-top: 10px;">
+                    <button id="simulate-data-btn" class="action-btn amber-btn"><i class="fas fa-sync-alt"></i> Simulate New Sensor Readings</button>
+                </div>
+                <canvas id="water-quality-chart"></canvas>
+            </section>
+
+            <section class="dashboard-card disease-surveillance">
+                <h2>Disease Surveillance - Village Y</h2>
+                <div class="report-summary">
+                    <p>New Diarrhea Reports (48h): <span id="diarrhea-count" class="alert-value">5</span></p>
+                    <p>Fever/Vomiting Reports (48h): <span id="fever-count">2</span></p>
+                </div>
+                <canvas id="disease-reports-chart"></canvas>
+            </section>
+        </div>
+        
+        <section class="dashboard-card alert-log">
+            <h2>Actionable Alert Log</h2>
+            <ul id="alert-list">
+                <!-- Alerts populated by script.js, now including the dispatch button -->
+            </ul>
+        </section>
+
+    </main>
+
+    <script>
+        // --- JAVASCRIPT LOGIC ---
+        
+        // Global array to hold interactive mock data (added IDs for tracking)
+        let interactiveAlerts = [
+            { id: 101, village: "Bishnupur", type: "RED", description: "Water Quality: High Turbidity. Health: 5 Diarrhea cases.", status: "Pending Investigation", time: "1 hour ago" },
+            { id: 102, village: "Kakching", type: "AMBER", description: "Health: Cluster of 3 Fever/Vomiting reports.", status: "ASHA Verified", time: "4 hours ago" },
+            { id: 103, village: "Imphal West", type: "RED", description: "Water Quality: High TDS. Health: 2 Diarrhea cases.", status: "Field Team Dispatched", time: "8 hours ago" },
+            { id: 104, village: "Thoubal", type: "GREEN", description: "Routine water check passed. Health reports nominal.", status: "Closed", time: "1 day ago" },
+        ];
+        
+        // --- FUNCTIONS FOR INTERACTIVITY ---
+
+        /**
+         * Re-renders the alert log based on the current state of interactiveAlerts.
+         * Includes the Dispatch button template.
+         */
+        function renderAlerts() {
+            const alertList = document.getElementById('alert-list');
+            alertList.innerHTML = ''; // Clear existing
+            
+            interactiveAlerts.forEach(alert => {
+                const li = document.createElement('li');
+                li.className = alert.type.toLowerCase();
+
+                // Determine the action button/status label to show
+                const actionContent = alert.status === 'Pending Investigation'
+                    ? `<button class="action-btn dispatch-btn" data-id="${alert.id}">
+                        <i class="fas fa-paper-plane"></i> Dispatch Team
+                    </button>`
+                    : `<span class="dispatched-label"><i class="fas fa-check-circle"></i> Actioned</span>`;
+
+                li.innerHTML = `
+                    <div class="alert-content">
+                        <strong>${alert.type} Alert: ${alert.village}</strong> (${alert.time})<br>
+                        Reason: ${alert.description} | Status: <span class="status" id="status-${alert.id}">${alert.status}</span>
+                    </div>
+                    <div class="alert-actions" id="actions-${alert.id}">
+                        ${actionContent}
+                    </div>
+                `;
+                alertList.appendChild(li);
+            });
+
+            // Attach click listeners to the newly rendered dispatch buttons
+            document.querySelectorAll('.dispatch-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    // Use parseInt to ensure the ID is a number
+                    handleDispatch(parseInt(this.dataset.id)); 
+                });
+            });
+        }
+        
+        /**
+         * Simulates dispatching a team, updates the alert status, and re-renders.
+         */
+        function handleDispatch(alertId) {
+            const alertIndex = interactiveAlerts.findIndex(a => a.id === alertId);
+            
+            if (alertIndex !== -1 && interactiveAlerts[alertIndex].status === 'Pending Investigation') {
+                interactiveAlerts[alertIndex].status = 'Field Team Dispatched';
+                interactiveAlerts[alertIndex].type = 'AMBER'; // Lower risk slightly on dispatch
+                // Re-render the alerts to update the UI
+                renderAlerts(); 
+                updateKPIs(); // Also update KPIs when an alert changes type
+            }
+        }
+        
+        /**
+         * Simulates new sensor data by cycling the gauge states.
+         */
+        let sensorState = 0;
+        function simulateSensorUpdate() {
+            const gauges = [
+                { id: 'gauge-turbidity', baseText: 'Turbidity: ' },
+                { id: 'gauge-ph', baseText: 'pH: ' },
+                { id: 'gauge-tds', baseText: 'TDS: ' }
+            ];
+            
+            const states = [
+                // State 0 (Initial - RED)
+                [{ value: '8.5 NTU (RED)', type: 'red' }, { value: '6.8 (GREEN)', type: 'green' }, { value: '450 ppm (AMBER)', type: 'amber' }],
+                // State 1 (Improved - AMBER)
+                [{ value: '6.1 NTU (AMBER)', type: 'amber' }, { value: '7.1 (GREEN)', type: 'green' }, { value: '490 ppm (AMBER)', type: 'amber' }],
+                // State 2 (Further Improved - GREEN)
+                [{ value: '3.2 NTU (GREEN)', type: 'green' }, { value: '7.0 (GREEN)', type: 'green' }, { value: '350 ppm (GREEN)', type: 'green' }]
+            ];
+            
+            sensorState = (sensorState + 1) % states.length;
+            const newState = states[sensorState];
+
+            gauges.forEach((gauge, index) => {
+                const element = document.getElementById(gauge.id);
+                element.textContent = gauge.baseText + newState[index].value;
+                element.className = 'gauge ' + newState[index].type;
+            });
+            
+            // Optionally update the button text
+            const btn = document.getElementById('simulate-data-btn');
+            btn.textContent = sensorState === 2 ? 'Data Stabilized (Click to Reset)' : 'Simulate New Sensor Readings';
+        }
+
+        // --- CORE DASHBOARD RENDERING (Refactored) ---
+
+        function updateKPIs() {
+            const redAlertCount = interactiveAlerts.filter(a => a.type === 'RED').length;
+            const amberAlertCount = interactiveAlerts.filter(a => a.type === 'AMBER').length;
+            const totalSites = 50; 
+
+            const globalStatusElement = document.getElementById('global-alert');
+            if (redAlertCount > 0) {
+                globalStatusElement.textContent = `Global Status: RED ALERT (${redAlertCount} active sites)`;
+                globalStatusElement.style.color = '#dc3545';
+            } else if (amberAlertCount > 0) {
+                globalStatusElement.textContent = `Global Status: AMBER ALERT (${amberAlertCount} active sites)`;
+                globalStatusElement.style.color = '#ffc107';
+            } else {
+                 globalStatusElement.textContent = `Global Status: GREEN (Nominal)`;
+                 globalStatusElement.style.color = '#28a745';
+            }
+
+            document.getElementById('kpi-red').textContent = redAlertCount;
+            document.getElementById('kpi-amber').textContent = amberAlertCount;
+            document.getElementById('kpi-total').textContent = totalSites;
+        }
+
+        function setupCharts() {
+            // --- 3. WATER QUALITY CHART (Time Series) ---
+            const waterChartCanvas = document.getElementById('water-quality-chart').getContext('2d');
+            new Chart(waterChartCanvas, {
+                type: 'line',
+                data: {
+                    labels: ['4 days ago', '3 days ago', '2 days ago', 'Yesterday', 'Today'],
+                    datasets: [{
+                        label: 'Turbidity (NTU)',
+                        data: [2, 3, 5, 7.5, 8.5],
+                        borderColor: '#dc3545',
+                        tension: 0.1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { title: { display: true, text: 'Turbidity Trend (Last 5 Days)' } },
+                    scales: { y: { beginAtZero: true, title: { display: true, text: 'NTU' } } }
+                }
+            });
+
+            // --- 4. DISEASE REPORTS CHART (Symptom Breakdown) ---
+            const diseaseChartCanvas = document.getElementById('disease-reports-chart').getContext('2d');
+            new Chart(diseaseChartCanvas, {
+                type: 'bar',
+                data: {
+                    labels: ['Diarrhea', 'Fever/Vomiting', 'Jaundice', 'Other'],
+                    datasets: [{
+                        label: 'Reports in Last 7 Days',
+                        data: [15, 8, 2, 4],
+                        backgroundColor: ['#007bff', '#ffc107', '#28a745', '#6c757d'],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { title: { display: true, text: 'Symptom Breakdown' } },
+                    scales: { y: { beginAtZero: true, title: { display: true, text: 'Number of Reports' } } }
+                }
+            });
+        }
+
+        // --- 6. NAVIGATION HIGHLIGHTING ---
+        function setupNavigation() {
+            const architectureSlide = document.getElementById('slide-architecture');
+            const dashboardSlide = document.getElementById('slide-dashboard');
+            const navArchitecture = document.getElementById('nav-architecture');
+            const navDashboard = document.getElementById('nav-dashboard');
+            
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.5 
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navArchitecture.classList.remove('active');
+                        navDashboard.classList.remove('active');
+
+                        if (entry.target.id === 'slide-architecture') {
+                            navArchitecture.classList.add('active');
+                        } else if (entry.target.id === 'slide-dashboard') {
+                            navDashboard.classList.add('active');
+                        }
+                    }
+                });
+            }, observerOptions);
+
+            observer.observe(architectureSlide);
+            observer.observe(dashboardSlide);
+            navArchitecture.classList.add('active');
+        }
+
+        // --- MAIN ENTRY POINT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderAlerts();
+            updateKPIs();
+            setupCharts();
+            setupNavigation();
+            
+            // Attach event listeners for new interactive features
+            document.getElementById('simulate-data-btn').addEventListener('click', simulateSensorUpdate);
+            
+            const focusMsg = document.getElementById('map-focus-msg');
+            document.getElementById('focus-map-btn').addEventListener('click', function() {
+                // Simulate map action
+                focusMsg.style.display = 'block';
+                this.disabled = true; // Disable button after click
+                setTimeout(() => {
+                    focusMsg.style.display = 'none';
+                    this.disabled = false;
+                }, 4000); // Hide message after 4 seconds
+            });
+        });
+    </script>
+
+</body>
+</html>
